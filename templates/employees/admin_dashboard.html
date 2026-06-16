@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Control Dashboard — Empatt{% endblock %}
+
+{% block content %}
+<!-- ── Page Header ────────────────────────────────── -->
+<div class="row mb-5 gs-reveal gs-reveal-up">
+    <div class="col d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="fw-bold mb-1" style="font-size:1.75rem;color:var(--primary);letter-spacing:-0.03em;">
+                Workforce Directory
+            </h1>
+            <p class="mb-0" style="color:var(--text-muted);font-size:0.9rem;">
+                Manage employees, roles, and assignments
+            </p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'employee_create' %}" id="addEmployeeBtn"
+               class="btn btn-primary fw-bold px-4 py-2">
+                <span class="me-1">＋</span> Add Employee
+            </a>
+            <a href="{% url 'create_task' %}" id="assignTaskBtn"
+               class="btn btn-success fw-bold px-4 py-2">
+                <span class="me-1">⚡</span> Assign Task
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ── Metric Cards ──────────────────────────────── -->
+<div class="row g-4 mb-5">
+    <div class="col-md-3 col-6">
+        <div class="card stat-card shimmer-bg gs-reveal gs-reveal-up gs-delay-1 p-4 text-center">
+            <div class="stat-value count-up">{{ total_employees }}</div>
+            <div class="stat-label">Total Employees</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card stat-card shimmer-bg gs-reveal gs-reveal-up gs-delay-2 p-4 text-center">
+            <div class="stat-value count-up" style="color:var(--success);">{{ present_today }}</div>
+            <div class="stat-label">Present Today</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card stat-card shimmer-bg gs-reveal gs-reveal-up gs-delay-3 p-4 text-center">
+            <div class="stat-value count-up" style="color:var(--danger);">{{ absent_today }}</div>
+            <div class="stat-label">Absent Today</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card stat-card shimmer-bg gs-reveal gs-reveal-up gs-delay-4 p-4 text-center">
+            <div class="stat-value count-up" style="color:var(--warning);">{{ attendance_rate }}%</div>
+            <div class="stat-label">Attendance Rate</div>
+            <div class="mt-1" style="font-size:0.72rem;color:var(--text-light);">
+                As of {{ today_date }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Employees Table ───────────────────────────── -->
+<div class="card shadow border-0 gs-reveal gs-reveal-scale gs-delay-2">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="employeesTable">
+                <thead>
+                    <tr>
+                        <th class="ps-4" style="border-radius:var(--radius-md) 0 0 0;">Username</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th class="text-center pe-4" style="border-radius:0 var(--radius-md) 0 0;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees %}
+                    <tr class="table-row-animate" style="--row-index:{{ forloop.counter }};">
+                        <td class="ps-4">
+                            <span class="fw-bold" style="color:var(--primary);">{{ emp.username }}</span>
+                        </td>
+                        <td>
+                            <span style="color:var(--text);">{{ emp.profile.first_name }} {{ emp.profile.last_name }}</span>
+                        </td>
+                        <td style="color:var(--text-muted);font-size:0.9rem;">{{ emp.email }}</td>
+                        <td>
+                            <span class="badge bg-info">{{ emp.profile.role }}</span>
+                        </td>
+                        <td class="text-center pe-4">
+                            <a href="{% url 'employee_update' emp.pk %}"
+                               class="btn btn-sm btn-outline-warning me-1 fw-semibold">
+                                ✏️ Edit
+                            </a>
+                            <a href="{% url 'employee_delete' emp.pk %}"
+                               class="btn btn-sm btn-outline-danger fw-semibold">
+                                🗑 Delete
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5">
+                            <div style="color:var(--text-light);font-size:2rem;margin-bottom:8px;">👥</div>
+                            <div style="color:var(--text-muted);font-weight:600;">No employees found</div>
+                            <div style="color:var(--text-light);font-size:0.85rem;">Add one using the button above</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* Table rows stagger-in */
+document.addEventListener('DOMContentLoaded', function() {
+    var rows = document.querySelectorAll('.table-row-animate');
+    rows.forEach(function(row, i) {
+        row.style.opacity = '0';
+        row.style.transform = 'translateX(-16px)';
+        row.style.transition = 'opacity 0.45s ease, transform 0.45s ease';
+        setTimeout(function() {
+            row.style.opacity  = '1';
+            row.style.transform = '';
+        }, 700 + i * 60);
+    });
+});
+</script>
+{% endblock %}

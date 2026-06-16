@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Assignment — Empatt{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center min-vh-75">
+    <div class="col-lg-7 col-md-9 col-12">
+        <div class="card border-0 p-4 p-md-5 gs-reveal gs-reveal-scale">
+
+            <!-- Header -->
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;font-size:1.4rem;box-shadow:0 10px 28px var(--glow);">
+                    ⚡
+                </div>
+                <div>
+                    <h3 class="fw-bold mb-0" style="color:var(--text);letter-spacing:-0.03em;">Assign New Task</h3>
+                    <p class="mb-0 small" style="color:var(--text-muted);">Distribute directives and configure tracking timelines</p>
+                </div>
+            </div>
+
+            <!-- Accent bar -->
+            <div style="height:3px;background:linear-gradient(90deg,var(--primary),var(--success),transparent);border-radius:100px;margin:16px 0 24px;opacity:0.7;"></div>
+
+            {% if form.errors %}
+            <div class="alert alert-danger p-3 mb-4 small text-center">
+                {% for field in form %}
+                    {% for error in field.errors %}{{ error }} {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="mb-3 field-anim" style="--fi:0;">
+                    <label class="form-label">Task Objective Title</label>
+                    <input type="text" name="title" class="form-control"
+                           placeholder="e.g., Generate Payroll Reports" required>
+                </div>
+
+                <div class="mb-3 field-anim" style="--fi:1;">
+                    <label class="form-label">Detailed Work Instructions</label>
+                    <textarea name="description" class="form-control" rows="4"
+                              placeholder="Describe specific steps and expectations..." required></textarea>
+                </div>
+
+                <div class="mb-3 field-anim" style="--fi:2;">
+                    <label class="form-label">Assignee Workforce Target</label>
+                    <select name="assigned_to" class="form-select" required>
+                        <option value="" disabled selected>Choose target employee…</option>
+                        {% for emp in employees %}
+                            <option value="{{ emp.id }}">
+                                {{ emp.username }}{% if emp.profile.first_name %} · {{ emp.profile.first_name }} {{ emp.profile.last_name }}{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-4 field-anim" style="--fi:3;">
+                    <label class="form-label">Due Target Deadline</label>
+                    <input type="date" name="due_date" class="form-control" required>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center pt-2 field-anim" style="--fi:4;">
+                    <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary px-4 py-2">
+                        ← Discard
+                    </a>
+                    <button type="submit" class="btn btn-primary fw-bold px-4 py-2">
+                        ⚡ Dispatch Task
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var fields = document.querySelectorAll('.field-anim');
+    fields.forEach(function(f, i) {
+        f.style.opacity   = '0';
+        f.style.transform = 'translateY(14px)';
+        f.style.transition = 'opacity 0.45s ease, transform 0.45s ease';
+        setTimeout(function() {
+            f.style.opacity   = '1';
+            f.style.transform = '';
+        }, 550 + i * 90);
+    });
+});
+</script>
+{% endblock %}

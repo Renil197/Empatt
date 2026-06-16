@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}Employee Console — Empatt{% endblock %}
+
+{% block content %}
+
+<!-- ── Hero Greeting ─────────────────────────────── -->
+<div class="row mb-4">
+    <div class="col-12 gs-reveal gs-reveal-up">
+        <div class="dashboard-hero rounded-4 p-4 p-md-5 float-subtle shimmer-bg">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h1 class="fw-bold mb-1 text-reveal" style="font-size:1.9rem;letter-spacing:-0.03em;">
+                        <span class="text-reveal-inner">Welcome back, {{ user.username }} 👋</span>
+                    </h1>
+                    <p class="mb-0 hero-subtitle text-reveal">
+                        <span class="text-reveal-inner">Here's your daily workspace overview.</span>
+                    </p>
+                </div>
+                <div class="text-end text-reveal">
+                    <span class="text-reveal-inner" style="display:inline-block;">
+                        <div style="font-size:0.75rem;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:2px;">Today</div>
+                        <div class="fw-bold text-white" style="font-size:1.05rem;">{{ now|date:"F j, Y" }}</div>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Split Grid ────────────────────────────────── -->
+<div class="row g-4">
+
+    <!-- Attendance Widget -->
+    <div class="col-md-4">
+        <div class="card border-0 p-4 h-100 gs-reveal gs-reveal-left depth-layer" id="attendanceCard">
+            <h5 class="fw-bold mb-1 text-reveal" style="color:var(--primary);">
+                <span class="text-reveal-inner">Daily Attendance</span>
+            </h5>
+            <p class="text-muted small mb-4 text-reveal">
+                <span class="text-reveal-inner">Log your daily presence to keep records accurate.</span>
+            </p>
+
+            <!-- Check In Button -->
+            <form action="{% url 'check_in' %}" method="POST" class="mb-4">
+                {% csrf_token %}
+                <button type="submit" id="checkInBtn"
+                        class="btn btn-glow w-100 py-3 fw-bold attendance-btn">
+                    <span class="d-flex align-items-center justify-content-center gap-2">
+                        <span class="btn-icon">✓</span>
+                        <span>Check In Now</span>
+                    </span>
+                </button>
+            </form>
+
+            <!-- Shift Logs -->
+            <h6 class="fw-semibold mb-2" style="color:var(--text);font-size:0.82rem;text-transform:uppercase;letter-spacing:0.06em;">Recent Shift Logs</h6>
+            <div style="max-height:240px;overflow-y:auto;" class="d-flex flex-column gap-2">
+                {% for record in user.attendance_records.all|dictsortreversed:"date" %}
+                    <div class="d-flex align-items-center gap-3 p-2 log-item">
+                        <div class="icon-pill">📅</div>
+                        <div class="flex-fill">
+                            <div class="small fw-semibold" style="color:var(--text);">{{ record.date }}</div>
+                        </div>
+                        <span class="badge bg-success badge-glow">{{ record.status }}</span>
+                    </div>
+                    {% empty %}
+                    <div class="log-empty text-center p-4">
+                        <div style="font-size:1.6rem;margin-bottom:6px;">📭</div>
+                        <div class="fw-semibold small" style="color:var(--text);">No logs yet</div>
+                        <div class="small text-soft">Check in above to start tracking.</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Board -->
+    <div class="col-md-8">
+        <div class="card border-0 p-4 h-100 gs-reveal gs-reveal-right depth-layer" id="taskBoard">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0 text-reveal" style="letter-spacing:-0.02em;">
+                    <span class="text-reveal-inner">Your Task Board</span>
+                </h5>
+                <span class="text-reveal" style="font-size:0.78rem;">
+                    <span class="text-reveal-inner" style="color:var(--text-muted);">Assigned tasks overview</span>
+                </span>
+            </div>
+
+            <div class="row g-3" id="taskList">
+                {% for task in user.tasks.all %}
+                <div class="col-12 task-entry" style="--task-i:{{ forloop.counter0 }};">
+                    <div class="p-4 task-card card-glow">
+                        <div class="d-flex flex-column gap-3">
+                            <div class="d-flex align-items-center gap-3 mb-1">
+                                <div class="task-icon">📝</div>
+                                <div>
+                                    <h6 class="mb-1 fw-bold">{{ task.title }}</h6>
+                                    <p class="mb-0 small text-soft">{{ task.description }}</p>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <div class="small">
+                                    <span style="color:var(--text-muted);">Due: </span>
+                                    <span class="fw-semibold" style="color:var(--warning);">{{ task.due_date }}</span>
+                                </div>
+                                <div>
+                                    {% if task.status == 'Completed' %}
+                                        <span class="badge bg-success badge-glow px-3 py-2">✓ Completed</span>
+                                    {% else %}
+                                        <form action="{% url 'complete_task' task.id %}" method="POST">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-success fw-semibold px-3">
+                                                Mark Done ✓
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-light border text-center py-5">
+                        <div style="font-size:2.5rem;margin-bottom:10px;">🎉</div>
+                        <h6 class="fw-bold mb-1" style="color:var(--text);">All caught up!</h6>
+                        <p class="mb-0 small text-muted">No outstanding tasks assigned.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    /* Task cards stagger */
+    var tasks = document.querySelectorAll('.task-entry');
+    tasks.forEach(function(t, i) {
+        t.style.opacity    = '0';
+        t.style.transform  = 'translateY(20px)';
+        t.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        setTimeout(function() {
+            t.style.opacity   = '1';
+            t.style.transform = '';
+        }, 800 + i * 100);
+    });
+});
+</script>
+{% endblock %}

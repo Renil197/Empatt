@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}System Gateway{% endblock %}</title>
+    <meta name="description" content="Empatt – Premium Employee Attendance & Task Management Platform">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Lenis smooth scroll -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.23/dist/lenis.min.css">
+
+    <!-- Theme static CSS -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/employees.css' %}">
+
+    <style>
+        /* ── Emerald Design Tokens (mirrored for inline use) ── */
+        :root {
+            --primary:       #10B981;
+            --primary-dark:  #059669;
+            --primary-light: #34D399;
+            --success:       #22C55E;
+            --warning:       #F59E0B;
+            --danger:        #EF4444;
+            --bg:            #F8FAFC;
+            --card:          #FFFFFF;
+            --text:          #1F2937;
+            --text-muted:    #6B7280;
+            --text-light:    #9CA3AF;
+            --border:        rgba(16, 185, 129, 0.12);
+            --glow:          rgba(16, 185, 129, 0.18);
+        }
+
+        /* Page-level fade in after loader dismisses */
+        #app-shell {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.55s 0.1s ease, transform 0.55s 0.1s ease;
+        }
+        #app-shell.visible {
+            opacity: 1;
+            transform: none;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- ─── LOADING SCREEN ─────────────────────────────────── -->
+<div id="empatt-loader" aria-hidden="true">
+    <div class="loader-logo">E</div>
+    <div class="loader-brand">Empatt</div>
+    <div class="loader-sub">Attendance &amp; Task Console</div>
+    <div class="loader-bar-track">
+        <div class="loader-bar-fill"></div>
+    </div>
+</div>
+<!-- ─────────────────────────────────────────────────────── -->
+
+<div id="app-shell">
+
+    <!-- ─── TOP NAV ────────────────────────────────────── -->
+    {% if user.is_authenticated %}
+    <nav id="empatt-topbar">
+        <div class="topbar-inner">
+            <!-- Brand -->
+            <a class="topbar-brand" href="{% url 'dashboard_redirect' %}">
+                <span class="topbar-logo">E</span>
+                <span class="topbar-name">Empatt</span>
+            </a>
+
+            <!-- Right side -->
+            <div class="topbar-right">
+                <!-- User pill -->
+                <div class="user-pill">
+                    <span class="user-avatar">{{ user.username|slice:":1"|upper }}</span>
+                    <span class="user-label">{{ user.username }}</span>
+                    {% if user.is_staff %}
+                        <span class="role-badge">Admin</span>
+                    {% endif %}
+                </div>
+
+                <!-- Logout -->
+                <form method="POST" action="{% url 'logout' %}" style="margin:0;">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-btn" id="logoutBtn" title="Sign out">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        <span>Logout</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+    <!-- ─────────────────────────────────────────────────── -->
+
+    <div class="container py-4">
+        {% block content %}
+        {% endblock %}
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Lenis smooth scroll -->
+<script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.23/dist/lenis.min.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   EMPATT CINEMATIC ANIMATION ENGINE
+   Emerald Edition · No external GSAP required
+═══════════════════════════════════════════════════ */
+(function() {
+    'use strict';
+
+    /* ── 1. LOADING SCREEN ─────────────────────────── */
+    const loader    = document.getElementById('empatt-loader');
+    const appShell  = document.getElementById('app-shell');
+
+    function dismissLoader() {
+        loader.classList.add('hidden');
+        setTimeout(() => {
+            loader.style.display = 'none';
+            appShell.classList.add('visible');
+            // Trigger initial reveals after shell appears
+            setTimeout(triggerViewportReveals, 80);
+        }, 720);
+    }
+
+    // Dismiss after minimum display time or on load, whichever is later
+    const MIN_LOADER_MS = 1400;
+    const loaderStart   = Date.now();
+
+    if (document.readyState === 'complete') {
+        const elapsed = Date.now() - loaderStart;
+        setTimeout(dismissLoader, Math.max(0, MIN_LOADER_MS - elapsed));
+    } else {
+        window.addEventListener('load', function() {
+            const elapsed = Date.now() - loaderStart;
+            setTimeout(dismissLoader, Math.max(0, MIN_LOADER_MS - elapsed));
+        });
+    }
+
+    /* ── 2. LENIS SMOOTH SCROLL ─────────────────────── */
+    let lenis;
+    try {
+        lenis = new Lenis({
+            duration: 1.35,
+            easing: function(t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); },
+            smooth: true,
+            smoothTouch: false,
+        });
+        function rafLoop(time) {
+            lenis.raf(time);
+            requestAnimationFrame(rafLoop);
+        }
+        requestAnimationFrame(rafLoop);
+    } catch(e) {
+        // Lenis not available, fall back to native smooth scroll
+    }
+
+    /* ── 3. SCROLL-REVEAL ENGINE ─────────────────────── */
+    function triggerViewportReveals() {
+        const reveals = document.querySelectorAll('.gs-reveal');
+        if (!reveals.length) return;
+
+        const io = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    io.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+        reveals.forEach(function(el) { io.observe(el); });
+    }
+
+    // Re-run if IntersectionObserver exists
+    if ('IntersectionObserver' in window) {
+        document.addEventListener('DOMContentLoaded', triggerViewportReveals);
+    } else {
+        // Fallback: just show everything
+        document.querySelectorAll('.gs-reveal').forEach(function(el) {
+            el.classList.add('is-visible');
+        });
+    }
+
+    /* ── 4. TEXT REVEAL TRIGGERS ─────────────────────── */
+    function setupTextReveals() {
+        const textReveals = document.querySelectorAll('.text-reveal');
+        if (!textReveals.length) return;
+
+        const tr = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                    tr.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.2 });
+
+        textReveals.forEach(function(el) { tr.observe(el); });
+    }
+    document.addEventListener('DOMContentLoaded', setupTextReveals);
+
+    /* ── 5. BUTTON RIPPLE EFFECT ─────────────────────── */
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn');
+        if (!btn) return;
+        const ripple = document.createElement('span');
+        ripple.classList.add('ripple');
+        const rect = btn.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        ripple.style.cssText = [
+            'width:' + size + 'px',
+            'height:' + size + 'px',
+            'left:' + (e.clientX - rect.left - size / 2) + 'px',
+            'top:' + (e.clientY - rect.top - size / 2) + 'px'
+        ].join(';');
+        btn.appendChild(ripple);
+        setTimeout(function() { ripple.remove(); }, 600);
+    });
+
+    /* ── 6. MAGNETIC HOVER (cards / buttons) ────────── */
+    function setupMagnetic() {
+        const targets = document.querySelectorAll('.stat-card, .depth-layer');
+        targets.forEach(function(el) {
+            el.addEventListener('mousemove', function(e) {
+                const rect = el.getBoundingClientRect();
+                const x = (e.clientX - rect.left - rect.width  / 2) / (rect.width  / 2);
+                const y = (e.clientY - rect.top  - rect.height / 2) / (rect.height / 2);
+                el.style.transform = [
+                    'perspective(600px)',
+                    'rotateY(' + (x * 5) + 'deg)',
+                    'rotateX(' + (-y * 5) + 'deg)',
+                    'translateY(-6px)',
+                    'scale(1.01)'
+                ].join(' ');
+            });
+            el.addEventListener('mouseleave', function() {
+                el.style.transform = '';
+            });
+        });
+    }
+    document.addEventListener('DOMContentLoaded', setupMagnetic);
+
+    /* ── 7. COUNTER NUMBER ANIMATION ────────────────── */
+    function animateCounters() {
+        const vals = document.querySelectorAll('.stat-value');
+        vals.forEach(function(el) {
+            const raw = el.textContent.trim();
+            const num = parseFloat(raw.replace('%',''));
+            if (isNaN(num)) return;
+            const isPercent = raw.includes('%');
+            const duration  = 1200;
+            const start     = performance.now();
+            const from      = 0;
+
+            function step(now) {
+                const progress = Math.min((now - start) / duration, 1);
+                // ease-out cubic
+                const ease = 1 - Math.pow(1 - progress, 3);
+                const current = from + (num - from) * ease;
+                el.textContent = (isPercent)
+                    ? current.toFixed(1) + '%'
+                    : Math.round(current).toString();
+                if (progress < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        });
+    }
+
+    // Trigger counters when stat cards come into view
+    if ('IntersectionObserver' in window) {
+        const counterIO = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    animateCounters();
+                    counterIO.disconnect();
+                }
+            });
+        }, { threshold: 0.3 });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const first = document.querySelector('.stat-card');
+            if (first) counterIO.observe(first);
+        });
+    }
+
+    /* ── 8. PARALLAX HERO ───────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function() {
+        const hero = document.querySelector('.dashboard-hero');
+        if (!hero) return;
+        window.addEventListener('scroll', function() {
+            const scrollY = window.pageYOffset;
+            hero.style.backgroundPositionY = (scrollY * 0.3) + 'px';
+        }, { passive: true });
+    });
+
+    /* ── 9. LOG ITEMS STAGGER ───────────────────────── */
+    document.addEventListener('DOMContentLoaded', function() {
+        const logItems = document.querySelectorAll('.log-item');
+        logItems.forEach(function(item, i) {
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(-20px)';
+            item.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            setTimeout(function() {
+                item.style.opacity = '1';
+                item.style.transform = '';
+            }, 600 + i * 100);
+        });
+    });
+
+})();
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>
